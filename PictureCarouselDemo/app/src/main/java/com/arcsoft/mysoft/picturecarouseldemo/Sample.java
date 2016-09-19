@@ -13,6 +13,6 @@ public class Sample extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sample);
         mView = (CanvasView) findViewById(R.id.canvasview);
-        mView.setCurrentValue(800);
+        mView.setCurrentValue(950,mView);
     }
 }

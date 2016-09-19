@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 /**
@@ -24,16 +23,17 @@ public class CanvasView extends View implements Runnable{
     private int mOvalPaintColor = Color.parseColor("#39a8f7");
     private float mStartAngel = 150.0f;
     private float mSweepAngel = 240.0f;
-    private float mOvalPaintWidth = 50.0f;
+    private float mOvalPaintWidth = 25.0f;
     private RectF mOvalRect = new RectF();
     private Paint mCircleLine;//画外侧圈的画笔
     private RectF mCircleLineRect = new RectF();
-    private float mCircleLinepaintWidth = 20.0f;
+    private float mCircleLinepaintWidth = 10.0f;
     private int mCircleLineBasicColor = Color.parseColor("#45b1f8");
     private int mStartColor = mCircleLineBasicColor;
     private int mEndColor = Color.parseColor("#ffffff");
     private int mCurrentColor = mStartColor;
     private Paint mChangePaint;
+    private float mAngleSweepStep = 10;
 
 
     public CanvasView(Context context) {
@@ -71,10 +71,10 @@ public class CanvasView extends View implements Runnable{
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        mOvalRect.left = 80;
-        mOvalRect.right = getWidth() - 80;
-        mOvalRect.bottom = getHeight() - 80;
-        mOvalRect.top = 80;
+        mOvalRect.left = 60;
+        mOvalRect.right = getWidth() - 60;
+        mOvalRect.bottom = getHeight() - 60;
+        mOvalRect.top = 60;
         canvas.drawArc(mOvalRect,mStartAngel,mSweepAngel,false,mOvalPaint);
         canvas.save();
         //绘制外层默认的底线
@@ -86,7 +86,8 @@ public class CanvasView extends View implements Runnable{
         canvas.restore();
 
         mChangePaint.setColor(mCurrentColor);
-        canvas.drawArc(mCircleLineRect,mStartAngel,mSweepAngel*(currentValue-mMinValue)/(mMaxValue-mMinValue),false,mChangePaint);
+        canvas.drawArc(mCircleLineRect,mStartAngel,10
+                ,false,mChangePaint);
         canvas.save();
 
     }
@@ -148,10 +149,10 @@ public class CanvasView extends View implements Runnable{
         return size;
     }
 
-    public void setCurrentValue(int destValue){
+    public void setCurrentValue(int destValue,CanvasView canvasView){
 
         mDesValue = destValue;
-        mRefreshThread = new Thread(this);
+        mRefreshThread = new Thread(canvasView);
         mRefreshThread.start();
 
     }
@@ -159,19 +160,24 @@ public class CanvasView extends View implements Runnable{
     @Override
     public void run() {
 
-        if(currentValue < mDesValue){
-            currentValue += 10;
-            mCurrentColor += (mEndColor-mStartColor)/10;
-        }else{
-            currentValue = mDesValue;
-            mCurrentColor = mEndColor;
+        while(currentValue < mDesValue){
+
+            if(currentValue < mDesValue){
+                currentValue += 5;
+                mStartAngel += (currentValue-mMinValue)/(mMaxValue-mMinValue)*(mSweepAngel-mStartAngel);
+                mCurrentColor += (mDesValue-mStartColor)/mMaxValue*mDesValue;
+            }else{
+                currentValue = mDesValue;
+                mCurrentColor = mEndColor;
+            }
+            postInvalidate();
+            try {
+                mRefreshThread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-        try {
-            mRefreshThread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        postInvalidate();
+
     }
 
     public void clear(){
